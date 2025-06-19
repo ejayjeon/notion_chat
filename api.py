@@ -123,4 +123,4 @@ if __name__ == "__main__":
         print("❌ 환경변수가 누락되었습니다. .zshrc 또는 .env 파일을 확인하세요.")
     else:
         # chat_loop()
-        uvicorn.run("api:app", host="0.0.0.0", port=5050, reload=True)
+        uvicorn.run("api:app", host="0.0.0.0", port=5051, reload=True)
