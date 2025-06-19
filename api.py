@@ -1,5 +1,5 @@
 # from flask import Flask, request, jsonify
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header, HTTPException
 from pydantic import BaseModel
 import openai
 import os
@@ -40,7 +40,10 @@ class QuestionRequest(BaseModel):
 # --- 기능 구현 ---
 
 @app.post("/ask")
-async def ask(req: QuestionRequest):
+async def ask(req: QuestionRequest, x_api_key = Header(headers, alias="X-API-KEY")):
+
+   if x_api_key != API_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="❌ 인증 실패: 올바른 API 키를 제공하세요")
     global session_page_id
     question = req.question.strip()
 
