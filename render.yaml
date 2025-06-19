@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: gpt-notion-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host=0.0.0.0 --port=5051
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: NOTION_API_KEY
+        sync: false
+      - key: NOTION_DATABASE_ID
+        sync: false
+    pythonVersion: 3.10
