@@ -40,7 +40,7 @@ class QuestionRequest(BaseModel):
 # --- 기능 구현 ---
 
 @app.post("/ask")
-async def ask(req: QuestionRequest, x_api_key = Header(headers, alias="X-API-KEY")):
+async def ask(req: QuestionRequest, x_api_key = Header(..., alias="X-API-KEY")):
     global session_page_id
     if x_api_key != API_SECRET_KEY:
         raise HTTPException(status_code=401, detail="❌ 인증 실패: 올바른 API 키를 제공하세요")
