@@ -1,8 +1,9 @@
 import requests
 import os
 import re
+from datetime import datetime
+from config import NOTION_API_KEY, NOTION_DATABASE_ID
 
-NOTION_API_KEY = os.getenv("NOTION_API_KEY")
 NOTION_HEADERS = {
     "Authorization": f"Bearer {NOTION_API_KEY}",
     "Content-Type": "application/json",

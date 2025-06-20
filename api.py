@@ -56,6 +56,8 @@ def ask():
         append_blocks_to_page(page_id, [create_callout_block(question, emoji=user_display)])
 
         # GPT 응답 (새로운 API 사용)
+        # OpenAI API 키 설정 (디코딩된 값 사용)
+        openai.api_key = OPENAI_API_KEY
         response = openai.ChatCompletion.create(
             model="gpt-4.1",
             messages=[{"role": "user", "content": question}],
