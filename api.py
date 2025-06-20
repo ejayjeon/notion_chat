@@ -1,13 +1,20 @@
 # from flask import Flask, request, jsonify
 from fastapi import FastAPI, Request, Header, HTTPException
-from pydantic import BaseModel
+from mangum import Mangum
+from question_request import QuestionRequest
+from config import (
+    OPENAI_API_KEY,
+    NOTION_API_KEY,
+    BACKEND_API_KEY,
+    NOTION_DATABASE_ID,
+    NOTION_HEADERS,
+)
+from session_store import get_or_create_session
 import openai
-import os
-import time
 import requests
 from datetime import datetime
-from loading_animation import LoadingAnimation
 from notion_blocks_custom import (
+    create_conversation_page,
     create_callout_block,
     parse_gpt_response,
     append_blocks_to_page,
@@ -15,76 +22,44 @@ from notion_blocks_custom import (
 
 app = FastAPI()
 
-# --- 설정 ---
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-NOTION_API_KEY = os.getenv("NOTION_API_KEY")
-NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
-
-openai.api_key = OPENAI_API_KEY
-
-session_page_id = None # 단일 세션
-
-
-
-NOTION_HEADERS = {
-    "Authorization": f"Bearer {NOTION_API_KEY}",
-    "Content-Type": "application/json",
-    "Notion-Version": "2022-06-28",
-}
-
-class QuestionRequest(BaseModel):
-    question: str
-
-
 # --- 기능 구현 ---
 
+@app.get("/")
+def read_root():
+    return {"message": "Hello from Lambda!"}
+
+handler = Mangum(app)
+
 @app.post("/ask")
-async def ask(req: QuestionRequest, x_api_key = Header(..., alias="X-API-KEY")):
-    global session_page_id
-    if x_api_key != API_SECRET_KEY:
-        raise HTTPException(status_code=401, detail="❌ 인증 실패: 올바른 API 키를 제공하세요")
+async def ask(req: QuestionRequest, x_api_key: str = Header(..., alias="X-API-KEY")):
+    if x_api_key != BACKEND_API_KEY:
+        raise HTTPException(status_code=401, detail="❌ 인증 실패: 유효하지 않은 API 키입니다")
 
     question = req.question.strip()
-
     if not question:
         return {"error": "질문이 비어 있습니다"}
 
-    if session_page_id is None:
-        session_page_id = create_conversation_page(question)
+    # 세션에 따른 페이지 관리
+    page_id = (
+    get_or_create_session(req.session_id, lambda: create_conversation_page(req.question))
+    if req.keepgoing else create_conversation_page(req.question)
+)
 
-    append_blocks_to_page(session_page_id, [create_callout_block(question, emoji="🙋‍♀️")])
+    # 질문 기록 (콜아웃 블록)
+    append_blocks_to_page(page_id, [create_callout_block(req.question, emoji=req.user_display)])
 
+    # GPT 응답
     response = openai.ChatCompletion.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[{"role": "user", "content": question}],
     )
     answer = response.choices[0].message.content.strip()
 
+    # 응답 기록 (문단 + 코드 블록 자동 분리)
     blocks = parse_gpt_response(answer)
-    append_blocks_to_page(session_page_id, blocks)
+    append_blocks_to_page(page_id, blocks)
 
-    return {"answer": answer}
-
-
-def create_conversation_page(title: str) -> str:
-    url = "https://api.notion.com/v1/pages"
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    data = {
-        "parent": {"database_id": NOTION_DATABASE_ID},
-        "properties": {
-            "날짜": {"date": {"start": today}},
-            "질문": {"title": [{"text": {"content": title}}]}
-        }
-    }
-
-    response = requests.post(url, headers=NOTION_HEADERS, json=data)
-    if response.status_code == 200:
-        return response.json()["id"]
-    else:
-        print("❌ 페이지 생성 실패:", response.json())
-        raise RuntimeError("Notion 페이지 생성 실패")
+    return {"answer": answer, "session_page_id": page_id}
 
 
 # def chat_loop():
@@ -120,10 +95,14 @@ def create_conversation_page(title: str) -> str:
 
 
 # --- 실행 ---
+# Serverless 환경에서는 내부적으로 FastAPI 객체(app)만 찾고 실행합니다
+# uvicorn.run(...) 같은 코드는 자동 실행됩니다
 
+# 로컬 테스트 용 
 if __name__ == "__main__":
     if not OPENAI_API_KEY or not NOTION_API_KEY:
         print("❌ 환경변수가 누락되었습니다. .zshrc 또는 .env 파일을 확인하세요.")
     else:
+        import uvicorn
         # chat_loop()
         uvicorn.run("api:app", host="0.0.0.0", port=5051, reload=True)

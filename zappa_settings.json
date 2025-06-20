@@ -1,0 +1,16 @@
+{
+  "production": {
+    "app_function": "api.handler",
+    "aws_region": "ap-northeast-2",
+    "profile_name": "notion-chat",
+    "project_name": "notion-chat",
+    "runtime": "python3.10",
+    "s3_bucket": "notion-chat-zappa-deploy",
+    "environment_variables": {
+      "OPENAI_API_KEY": "openai-api-key",
+      "NOTION_API_KEY": "notion-api-key",
+      "NOTION_DATABASE_ID": "notion-database-id",
+      "BACKEND_API_KEY": "backend-api-key"
+    }
+  }
+}

@@ -12,4 +12,6 @@ services:
         sync: false
       - key: NOTION_DATABASE_ID
         sync: false
+      - key: BACKEND_API_KEY
+        sync: false
     pythonVersion: 3.10

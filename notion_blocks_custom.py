@@ -17,6 +17,24 @@ NOTION_CODE_LANGUAGES = {
 DIVIDER_RE = re.compile(r"^[-*_]{3,}$")
 INLINE_CODE_RE = re.compile(r"`([^`]+)`")
 
+# --- Notion 페이지 생성 ---
+def create_conversation_page(title: str) -> str:
+    url = "https://api.notion.com/v1/pages"
+    today = datetime.now().strftime("%Y-%m-%d")
+    data = {
+        "parent": {"database_id": NOTION_DATABASE_ID},
+        "properties": {
+            "날짜": {"date": {"start": today}},
+            "질문": {"title": [{"text": {"content": title}}]}
+        }
+    }
+    response = requests.post(url, headers=NOTION_HEADERS, json=data)
+    if response.status_code == 200:
+        return response.json()["id"]
+    else:
+        print("❌ 페이지 생성 실패:", response.json())
+        raise RuntimeError("Notion 페이지 생성 실패")
+
 def create_code_block(content: str, language: str = "python"):
     return {
         "object": "block",
