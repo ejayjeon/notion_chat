@@ -66,10 +66,6 @@ def ask():
             if keepgoing else create_conversation_page(question)
         )
 
-        # 질문 기록 (콜아웃 블록)
-        question_blocks = [create_callout_block(f"질문: {question}", emoji=user_display)]
-        append_blocks_to_page(page_id, question_blocks)
-
         # GPT 응답 (새로운 API 사용)
         # OpenAI API 키 설정 (디코딩된 값 사용)
         openai.api_key = OPENAI_API_KEY
@@ -79,10 +75,17 @@ def ask():
         )
         answer = response.choices[0].message.content.strip()
 
-        # 응답 기록 (답변 콜아웃 + 마크다운 파싱된 블록들)
-        answer_blocks = [create_callout_block("답변", emoji="🤖")]
-        answer_blocks.extend(parse_gpt_response(answer))
-        append_blocks_to_page(page_id, answer_blocks)
+        # 모든 블록을 한 번에 추가 (성능 최적화)
+        all_blocks = []
+        # 질문 블록
+        all_blocks.append(create_callout_block(f"질문: {question}", emoji=user_display))
+        # 답변 헤더 블록
+        all_blocks.append(create_callout_block("답변", emoji="🤖"))
+        # 답변 내용 블록들
+        all_blocks.extend(parse_gpt_response(answer))
+        
+        # 한 번에 모든 블록 추가
+        append_blocks_to_page(page_id, all_blocks)
 
         return jsonify({"answer": answer, "session_page_id": page_id})
     

@@ -195,8 +195,21 @@ def parse_gpt_response(response: str):
     return blocks
 
 def append_blocks_to_page(page_id: str, blocks: list):
+    """한 번에 모든 블록을 추가하여 성능 최적화"""
+    if not blocks:
+        return
+    
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
-    for block in blocks:
-        response = requests.patch(url, headers=NOTION_HEADERS, json={"children": [block]})
+    
+    # Notion API는 한 번에 최대 100개 블록까지 추가 가능
+    batch_size = 1000
+    for i in range(0, len(blocks), batch_size):
+        batch = blocks[i:i + batch_size]
+        response = requests.patch(url, headers=NOTION_HEADERS, json={"children": batch})
         if response.status_code != 200:
-            print("❌ 블록 추가 실패:", response.json())
+            print(f"❌ 블록 추가 실패 (배치 {i//batch_size + 1}):", response.json())
+            # 실패 시 개별적으로 다시 시도
+            for block in batch:
+                individual_response = requests.patch(url, headers=NOTION_HEADERS, json={"children": [block]})
+                if individual_response.status_code != 200:
+                    print(f"❌ 개별 블록 추가 실패:", individual_response.json())
