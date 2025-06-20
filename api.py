@@ -66,20 +66,25 @@ def ask():
             if keepgoing else create_conversation_page(question)
         )
 
-        # GPT 응답 (새로운 API 사용)
+        # GPT 응답 (더 빠른 모델 사용으로 타임아웃 방지)
         # OpenAI API 키 설정 (디코딩된 값 사용)
         openai.api_key = OPENAI_API_KEY
         response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": question}],
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "간결하고 명확한 답변을 제공하세요. 코드가 필요하면 마크다운 형식으로 작성하세요."},
+                {"role": "user", "content": question}
+            ],
+            max_tokens=1000,  # 응답 길이 제한으로 타임아웃 방지
+            temperature=0.7
         )
         answer = response.choices[0].message.content.strip()
 
         # 모든 블록을 한 번에 추가 (성능 최적화)
         all_blocks = []
         # 질문 블록
-        all_blocks.append(create_callout_block(f"질문: {question}", emoji=user_display))
-        # 답변 헤더 블록
+        all_blocks.append(create_callout_block(question, emoji=user_display))
+        # 답변 헤더 블록 
         all_blocks.append(create_callout_block("답변", emoji="🤖"))
         # 답변 내용 블록들
         all_blocks.extend(parse_gpt_response(answer))

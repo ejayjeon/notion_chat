@@ -202,7 +202,7 @@ def append_blocks_to_page(page_id: str, blocks: list):
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
     
     # Notion API는 한 번에 최대 100개 블록까지 추가 가능
-    batch_size = 1000
+    batch_size = 100
     for i in range(0, len(blocks), batch_size):
         batch = blocks[i:i + batch_size]
         response = requests.patch(url, headers=NOTION_HEADERS, json={"children": batch})
