@@ -51,7 +51,8 @@ def ask():
         if not data:
             return jsonify({"error": "JSON 데이터가 필요합니다"}), 400
 
-        question = data.get("question", "").strip()
+        # message와 question 둘 다 지원
+        question = data.get("question", data.get("message", "")).strip()
         session_id = data.get("session_id")
         keepgoing = data.get("keepgoing", False)
         user_display = data.get("user_display", "🙋‍♀️")
@@ -66,20 +67,22 @@ def ask():
         )
 
         # 질문 기록 (콜아웃 블록)
-        append_blocks_to_page(page_id, [create_callout_block(question, emoji=user_display)])
+        question_blocks = [create_callout_block(f"질문: {question}", emoji=user_display)]
+        append_blocks_to_page(page_id, question_blocks)
 
         # GPT 응답 (새로운 API 사용)
         # OpenAI API 키 설정 (디코딩된 값 사용)
         openai.api_key = OPENAI_API_KEY
         response = openai.ChatCompletion.create(
-            model="gpt-4.1",
+            model="gpt-4",
             messages=[{"role": "user", "content": question}],
         )
         answer = response.choices[0].message.content.strip()
 
-        # 응답 기록 (문단 + 코드 블록 자동 분리)
-        blocks = parse_gpt_response(answer)
-        append_blocks_to_page(page_id, blocks)
+        # 응답 기록 (답변 콜아웃 + 마크다운 파싱된 블록들)
+        answer_blocks = [create_callout_block("답변", emoji="🤖")]
+        answer_blocks.extend(parse_gpt_response(answer))
+        append_blocks_to_page(page_id, answer_blocks)
 
         return jsonify({"answer": answer, "session_page_id": page_id})
     
