@@ -1,0 +1,22 @@
+{
+  "production": {
+    "app_function": "api_flask.app",
+    "aws_region": "ap-northeast-2",
+    "profile_name": "notion-chat",
+    "project_name": "notion-chat",
+    "runtime": "python3.10",
+    "s3_bucket": "notion-chat-zappa-deploy",
+    "timeout_seconds": 30,
+    "memory_size": 512,
+    "keep_warm": false,
+    "exclude": [
+      "*.git*",
+      "*.DS_Store*",
+      "*__pycache__*",
+      "*.pyc",
+      ".env*",
+      "venv/*",
+      "README.md"
+    ]
+  }
+} 
