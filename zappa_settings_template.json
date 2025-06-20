@@ -1,6 +1,6 @@
 {
   "production": {
-    "app_function": "api_flask.app",
+    "app_function": "api.app",
     "aws_region": "ap-northeast-2",
     "profile_name": "notion-chat",
     "project_name": "notion-chat",

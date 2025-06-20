@@ -2,6 +2,7 @@ import json
 from dotenv import dotenv_values
 
 ZAPPA_TEMPLATE_PATH = "zappa_settings_template.json"
+ZAPPA_SETTINGS_PATH = "zappa_settings.json"
 
 # 1. .env 로딩
 env_vars = dotenv_values(".env")
