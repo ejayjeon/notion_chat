@@ -29,9 +29,22 @@ def read_root():
 @app.route("/ask", methods=["POST"])
 def ask():
     try:
-        # API Key 확인
+        # API Key 확인 (Base64 디코딩 처리)
         api_key = request.headers.get("X-API-KEY")
-        if api_key != BACKEND_API_KEY:
+        print(f"Received API key: {api_key}")
+        
+        # 받은 API 키가 Base64 인코딩되어 있다면 디코딩
+        try:
+            import base64
+            decoded_api_key = base64.b64decode(api_key).decode('utf-8')
+            print(f"Decoded API key: {decoded_api_key}")
+        except:
+            decoded_api_key = api_key  # 디코딩 실패 시 원본 사용
+            print(f"Using original API key: {decoded_api_key}")
+        
+        print(f"Expected API key: {BACKEND_API_KEY}")
+        
+        if decoded_api_key != BACKEND_API_KEY:
             return jsonify({"error": "❌ 인증 실패: 유효하지 않은 API 키입니다"}), 401
 
         data = request.get_json()
